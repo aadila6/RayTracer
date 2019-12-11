@@ -1,9 +1,9 @@
 CC = /usr/bin/g++
 
 #OPENGL LIBS FOR LINUX/CSIF
-#GLLIB :=  -lGL -lGLEW -lGLU -lglut
+GLLIB :=  -lGL -lGLEW -lGLU -lglut
 #OPENGL LIBS FOR MAC
-GLLIB := -framework OpenGL -framework GLUT
+#GLLIB := -framework OpenGL -framework GLUT
 
 #COMPILER FLAGS
 CCFLAGS := -std=c++17 -Wno-deprecated
@@ -19,7 +19,7 @@ endif
 LDLIBS := $(GLLIB)
 
 TARGET = main
-OBJS = main.o Geometry.o
+OBJS = main.o
 
 
 all: $(TARGET)

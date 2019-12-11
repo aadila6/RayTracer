@@ -138,15 +138,16 @@ struct Sphere{
         this->radius = r;
     }
     bool ray_intersect(vec3f &orig, vec3f &dir, float &t0){
-        vec3f L = center - orig;
-        float tca = L.dot(dir);
-        float d2 = L.dot(L) - tca*tca;
-        if (d2 > radius*radius) return false;
-        float thc = sqrtf(radius*radius - d2);
-        t0 = tca - thc;
-        float t1 = tca + thc;
-        if (t0 < 0) t0 = t1;
-        if (t0 < 0) return false;
+        vec3f o = orig;
+        vec3f c = center;
+        vec3f l = dir;
+        vec3f R = o - c;
+        float r = radius;
+        float A = -(l.dot(R));
+        float radicand = (l.dot(R))*(l.dot(R)) - (R.norm() * R.norm()) + r*r;
+        if (radicand < 0.0f)
+            return false;
+        
         return true;
     }
 };

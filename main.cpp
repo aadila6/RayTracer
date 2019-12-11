@@ -36,11 +36,11 @@
 using namespace std;
 char *inputFileName;
 constexpr int PIXEL_SIZE = 1;
-constexpr int GRID_WIDTH= 800;
-constexpr int GRID_HEIGHT = 800;
+constexpr int GRID_WIDTH= 600;
+constexpr int GRID_HEIGHT = 600;
 constexpr int WINDOW_HEIGHT = GRID_HEIGHT*PIXEL_SIZE;
 constexpr int WINDOW_WIDTH= GRID_WIDTH*PIXEL_SIZE;
-constexpr float SCALE= GRID_WIDTH*.5;
+//constexpr float SCALE= GRID_WIDTH*.5;
 bool phongSwitch;
 bool htSwitch;
 void init();
@@ -68,8 +68,8 @@ int ddaIntercepts(int yvalue, Point start, Point end);
 void setGlobalValues();
 void initGlobalValues();
 char fileG;
-vec3f lightSource(10,10,10);
-vec3f frontPoint(10,10,10);
+vec3f lightSource(0, -10, 0);
+vec3f frontPoint(0, -10, 0);
 //vec3f lightSource(0,100,100);
 //vec3f frontPoint(-10,10,10);
 RGB ambient(1,1,1);
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     //create window of size (win_width x win_height
     glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     //windown title is "glut demo"
-    glutCreateWindow("Three Dimentional Drawing");
+    glutCreateWindow("Ray Tracing");
     /*defined glut callback functions*/
     glutDisplayFunc(display); //rendering calls here
     glutReshapeFunc(reshape); //update GL on window size change
@@ -106,12 +106,12 @@ int main(int argc, char **argv)
 void init()
 {
     //set clear color (Default background to white)
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glLineWidth(2.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glLineWidth(2.0f);
     //checks for OpenGL errors
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, GRID_WIDTH, 0, GRID_HEIGHT, -1, 1);
+    glOrtho(0, GRID_WIDTH, 0, GRID_HEIGHT, -10, 10);
     check();
 }
 
@@ -150,34 +150,49 @@ void display()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     std::vector<Sphere> spheres;
-    Sphere dila(vec3f(0.9*GRID_WIDTH,0.9*GRID_WIDTH,0.9*GRID_WIDTH), 100);
-    Sphere dile(vec3f(1*GRID_WIDTH,2*GRID_WIDTH,3*GRID_WIDTH), 80);
-    Sphere dilaa(vec3f(3*GRID_WIDTH,4*GRID_WIDTH,5*GRID_WIDTH), 200);
-//    drawSplitLines();
-    for(int i = 0; i<GRID_HEIGHT*2;i++){
-        for(int j = 0; j < GRID_WIDTH*2; j++){
+    Sphere dila(vec3f(300.0f, 300.0f, -100.0f), 100.0f); //vec3f(0.9*GRID_WIDTH,0.9*GRID_WIDTH,0.9*GRID_WIDTH), 100);
+    Sphere dile(vec3f(500.0f,500.0f,-100.0f), 50.f);
+    Sphere dilaa(vec3f(500.0f,200.0f,-100.0f), 120.f);
+    
+    //    drawSplitLines();
+    for(int i = 0; i < GRID_HEIGHT; i++){
+        for(int j = 0; j < GRID_WIDTH; j++){
             float dist_i = 0;
-            vec3f orig(i,j,10);
-            vec3f dir = vec3f(i,j,GRID_WIDTH).normalized();
+            vec3f orig(j, i, 10);
+            //vec3f dir = vec3f(i,j,GRID_WIDTH).normalized();
+            vec3f dir(0.0f, 0.0f, -1.0f);
             vec3f N = (orig - dila.center).normalized();
-            vec3f nP(1,0,0);
             if (dila.ray_intersect(orig, dir, dist_i)) {
-                Point r1 = Point(vec3f(i,j,1),RGB(1.0,1.0,1.0));
-                vec3f N = (orig - dila.center).normalized();
-                PhongModel one(r1,N,frontPoint, lightSource,1,ambient);
-                draw_pix(i,j,one.phongrgb);
+                vec3f hit = orig + dist_i*dir;
+                Point r1 = Point(hit, RGB(1.0,1.0,1.0));
+                vec3f N = (2.0f*(hit - dila.center)).normalized();
+                float d = N.dot(-1.0f*(lightSource - hit).normalized());
+                RGB color(d, d, d);
+                draw_pix(i, j, color);
             }
             
+            dist_i = 0;
+            orig = vec3f(j, i, 10);
+            dir = vec3f(0.0f, 0.0f, -1.0f);
             if (dile.ray_intersect(orig, dir, dist_i)) {
-                    Point r2 = Point(vec3f(i,j,1),RGB(1.0,1.0,1.0));
-                    PhongModel two(r2,vec3f(0,1,0),frontPoint,lightSource,.5,RGB(0.6,.8,.9));
-                    draw_pix(i,j,two.phongrgb);
+                vec3f hit = orig + dist_i*dir;
+                Point r1 = Point(hit, RGB(1.0,1.0,1.0));
+                vec3f N = (2.0f*(hit - dile.center)).normalized();
+                float d = N.dot(-1.0f*(lightSource - hit).normalized());
+                RGB color(d*1.0, d*0.5, d*0.5);
+                draw_pix(i, j, color);
             }
             
+            dist_i = 0;
+            orig = vec3f(j, i, 10);
+            dir = vec3f(0.0f, 0.0f, -1.0f);
             if (dilaa.ray_intersect(orig, dir, dist_i)) {
-                    Point r3 = Point(vec3f(i,j,1),RGB(1.0,1.0,1.0));
-                    PhongModel three(r3,vec3f(0,1,0),frontPoint,lightSource,.5,RGB(0.9,.6,.3));
-                    draw_pix(i,j,three.phongrgb);
+                vec3f hit = orig + dist_i*dir;
+                Point r1 = Point(hit, RGB(1.0,1.0,1.0));
+                vec3f N = (2.0f*(hit - dilaa.center)).normalized();
+                float d = N.dot(-1.0f*(lightSource - hit).normalized());
+                RGB color(d*0.3, d*0.4, d*0.9);
+                draw_pix(i, j, color);
             }
         }
     }
@@ -342,288 +357,6 @@ RGB calculateRGB(float y1, float y2, float y3, RGB color1, RGB color2)
 
 
 
-
-//void goroShading(Point p1, Point p2, Point p3,vec3f fn, float spect, char mode){
-//    if(mode == 'y'){
-//        p1 = swapCoordsyz(p1);
-//        p2 = swapCoordsyz(p2);
-//        p3 = swapCoordsyz(p3);
-//    }else if(mode == 'z'){
-//        p1 = swapCoordsxz(p1);
-//        p2 = swapCoordsxz(p2);
-//        p3 = swapCoordsxz(p3);
-//    }
-//    int count = 0;
-//    int ymax, ymin;
-//    std::vector<int> records;
-//    std::vector<RGB> rgbs;
-//    ymax = rdf(max(max(p1.point.y(),p2.point.y()),p3.point.y()));
-//    ymin = rdf(min(min(p1.point.y(),p2.point.y()),p3.point.y()));
-//    Point r1 = p1;
-//    Point r2 = p2;
-//    Point r3 = p3;
-//    r1.point = r1.point / GRID_WIDTH;
-//    r2.point = r2.point / GRID_WIDTH;
-//    r3.point = r3.point / GRID_WIDTH;
-//
-//    PhongModel one(r1,fn,frontPoint, lightSource,spect,ambient);
-//    PhongModel two(r2,fn,frontPoint, lightSource,spect,ambient);
-//    PhongModel three(r3,fn,frontPoint, lightSource,spect,ambient);
-//    int lol = 0;
-//    for(int i=ymin; i<ymax; i++){
-//        int x = 0;
-//        x = ddaIntercepts(i, p1, p2);
-//        RGB temp = calculateRGB(p1.point.y(),p2.point.y(),i,p1.intensity,p2.intensity);
-//        if(phongSwitch){
-//            temp = calculateRGB(p1.point.y(),p2.point.y(),i,one.phongrgb,two.phongrgb);
-//        }
-//        if(x!= -1){
-//            bool found = false;
-//            for(int k = 0; k<records.size();k++){
-//                if(records[k] == x){
-//                    found = true;
-//                    break;
-//                }
-//            }
-//            if(!found){
-//                int h = 0;
-//                for(int h = 0; h<records.size();h++){
-//                    if(x<records[h]){
-//                        break;
-//                    }
-//                }
-//                records.insert(records.begin()+h,x);
-//                rgbs.insert(rgbs.begin() + h, temp);
-//            }
-//        }
-//
-//        x = ddaIntercepts(i, p1, p3);
-//        temp = calculateRGB(p1.point.y(),p3.point.y(),i,p1.intensity,p3.intensity);
-//        if(phongSwitch){
-//            temp = calculateRGB(p1.point.y(),p3.point.y(),i,one.phongrgb,three.phongrgb);
-//        }
-//        if(x!= -1){
-//            bool found = false;
-//            for(int k = 0; k<records.size();k++){
-//                if(records[k] == x){
-//                    found = true;
-//                    break;
-//                }
-//            }
-//            if(!found){
-//                int h = 0;
-//                for(int h = 0; h<records.size();h++){
-//                    if(x<records[h]){
-//                        break;
-//                    }
-//                }
-//                records.insert(records.begin()+h,x);
-//                rgbs.insert(rgbs.begin() + h, temp);
-//            }
-//        }
-//
-//
-//        x = ddaIntercepts(i, p2, p3);
-//        temp = calculateRGB(p2.point.y(),p3.point.y(),i,p2.intensity,p3.intensity);
-//        if(phongSwitch){
-//            temp = calculateRGB(p2.point.y(),p3.point.y(),i,two.phongrgb,three.phongrgb);
-//        }
-//        if(x!= -1){
-//            bool found = false;
-//            for(int k = 0; k<records.size();k++){
-//                if(records[k] == x){
-//                    found = true;
-//                    break;
-//                }
-//            }
-//            if(!found){
-//                int h = 0;
-//                for(int h = 0; h<records.size();h++){
-//                    if(x<records[h]){
-//                        break;
-//                    }
-//                }
-//                records.insert(records.begin()+h,x);
-//                rgbs.insert(rgbs.begin() + h, temp);
-//            }
-//        }
-//        //开始画
-//        if (records.size() == 1){
-//            lol = 1;
-//            if(mode == 'y'){
-//                if(htSwitch){
-//                    if(lol==0){
-//                        Point la(vec3f(records[0], i,0)/3,rgbs[0]);
-//                        drawMegaPixel(la);
-//                    }else if(lol == 1){
-//                        lol++;
-//                    }else if(lol == 2){
-//                        lol = 0;
-//                    }
-//                }else{
-//                    draw_pix(records[0]*.5, i*.5+0.5*WINDOW_HEIGHT, rgbs[0]);
-//                }
-//            }else if(mode == 'z'){
-//                if(htSwitch){
-//                    Point la(vec3f(records[0]*.5+.5*WINDOW_WIDTH, i*.5+0.5*WINDOW_HEIGHT,0)/3,rgbs[0]);
-//                    drawMegaPixel(la);
-//                }else{
-//                    draw_pix(records[0]*.5+.5*WINDOW_WIDTH, i*.5+0.5*WINDOW_HEIGHT, rgbs[0]);
-//                }
-//            }
-//            else{
-//                if(htSwitch){
-//                    if(lol==0){
-//                        Point la(vec3f(records[0]*.5, i*.5,0),rgbs[0]);
-//                        drawMegaPixel(la);
-//                    }else if(lol == 1){
-//                        lol++;
-//                    }else if(lol == 2){
-//                        lol = 0;
-//                    }
-//                }else{
-//                    draw_pix(records[0]*.5, i*.5, rgbs[0]);
-//                }
-//            }
-//        }
-//
-//        else if (records.size() == 2)
-//        {
-//            //            glm::vec3 colorbtw = glm::vec3(0);
-//            int dx;
-//            int start,end;
-//            dx = records[1] - records[0];
-//            lol = 1;
-//            if(dx<0){
-//                start = records[1];
-//                end = records[0];
-//                count++;
-////                std::cout<<"dx<0!!!!"<<std::endl;
-//            }else{
-//                start = records[0];
-//                end = records[1];
-//            }
-//
-//            for (int k = start; k <= end; k++)
-//            {
-//                //linear interpolation
-//                RGB colorbtw;
-//                colorbtw.r= (records[1] - k) * 1.0f / (dx * 1.0f) * rgbs[0].r + (k - records[0]) * 1.0f / (dx * 1.0f) * rgbs[1].r;
-//                colorbtw.g= (records[1] - k) * 1.0f / (dx * 1.0f) * rgbs[0].g + (k - records[0]) * 1.0f / (dx * 1.0f) * rgbs[1].g;
-//                colorbtw.b= (records[1] - k) * 1.0f / (dx * 1.0f) * rgbs[0].b + (k - records[0]) * 1.0f / (dx * 1.0f) * rgbs[1].b;
-//                if(mode == 'y'){
-//                    if(htSwitch){
-//                        if(lol==0){
-//                            Point la(vec3f(k*.5,i*.5+0.5*WINDOW_HEIGHT,0)/3,colorbtw);
-//                            drawMegaPixel(la);
-//                        }else if(lol == 1){
-//                            lol++;
-//                        }else if(lol == 2){
-//                            lol = 0;
-//                        }
-//                    }else{
-//                        draw_pix(k*.5, i*.5+0.5*WINDOW_HEIGHT, colorbtw);
-//                    }
-//
-//                }else if(mode == 'z'){
-//                    if(htSwitch){
-//                        if(lol==0){
-//                            Point la(vec3f(k*.5+.5*WINDOW_WIDTH,i*.5+0.5*WINDOW_HEIGHT,0)/3,colorbtw);
-//                            drawMegaPixel(la);
-//                        }else if(lol == 1){
-//                            lol++;
-//                        }else if(lol == 2){
-//                            lol = 0;
-//                        }
-//                    }else{
-//                        draw_pix(k*.5+.5*WINDOW_WIDTH, i*.5+0.5*WINDOW_HEIGHT, colorbtw);
-//                    }
-//                }else{
-//                    if(htSwitch){
-//                        if(lol==0){
-//                            Point la(vec3f(k*.5,i*.5,0)/3,colorbtw);
-//                            drawMegaPixel(la);
-//                        }else if(lol == 1){
-//                            lol++;
-//                        }else if(lol == 2){
-//                            lol = 0;
-//                        }
-//                    }else{
-//                        draw_pix(k*.5, i*.5, colorbtw);
-//                    }
-//                }
-//            }
-//        }else{
-//            int dx;
-//            int start,end;
-//            dx = records[2] - records[0];
-//            lol = 1;
-//            if(dx<0){
-//                start = records[2];
-//                end = records[0];
-//                count++;
-////                std::cout<<"dx<0!!!!"<<std::endl;
-//            }else{
-//                start = records[0];
-//                end = records[2];
-//            }
-//            for (int k = start; k <= end; k++)
-//            {
-//                //linear interpolation
-//                RGB colorbtw;
-//                colorbtw.r = (records[2] - k) * 1.0f / (dx * 1.0f) * rgbs[0].r + (k - records[0]) * 1.0f / (dx * 1.0f) * rgbs[2].r;
-//                colorbtw.g = (records[2] - k) * 1.0f / (dx * 1.0f) * rgbs[0].g + (k - records[0]) * 1.0f / (dx * 1.0f) * rgbs[2].g;
-//                colorbtw.b = (records[2] - k) * 1.0f / (dx * 1.0f) * rgbs[0].b + (k - records[0]) * 1.0f / (dx * 1.0f) * rgbs[2].b;
-////                int lol = 0;
-//                if(mode == 'y'){
-//                    if(htSwitch){
-//                        if(lol==0){
-//                            Point la(vec3f(k*.5,i*.5+0.5*WINDOW_HEIGHT,0)/3,colorbtw);
-//                            drawMegaPixel(la);
-//                        }else if(lol == 1){
-//                            lol++;
-//                        }else if(lol == 2){
-//                            lol = 0;
-//                        }
-//                    }else{
-//                        draw_pix(k*.5, i*.5+0.5*WINDOW_HEIGHT, colorbtw);
-//                    }
-//
-//                }else if(mode == 'z'){
-//                    if(htSwitch){
-//                        if(lol==0){
-//                            Point la(vec3f(k*.5+.5*WINDOW_WIDTH,i*.5+0.5*WINDOW_HEIGHT,0)/3,colorbtw);
-//                            drawMegaPixel(la);
-//                        }else if(lol == 1){
-//                            lol++;
-//                        }else if(lol == 2){
-//                            lol = 0;
-//                        }
-//                    }else{
-//                        draw_pix(k*.5+.5*WINDOW_WIDTH, i*.5+0.5*WINDOW_HEIGHT, colorbtw);
-//                    }
-//                }else{
-//                    if(htSwitch){
-//                        if(lol==0){
-//                            Point la(vec3f(k*.5,i*.5,0)/3,colorbtw);
-//                            drawMegaPixel(la);
-//                        }else if(lol == 1){
-//                            lol++;
-//                        }else if(lol == 2){
-//                            lol = 0;
-//                        }
-//                    }else{
-//                        draw_pix(k*.5, i*.5, colorbtw);
-//                    }
-//                }
-//            }
-//        }
-//        records.clear();
-//        rgbs.clear();
-//        lol = 1;
-//    }
-////    std::cout<<count<<std::endl;
-//}
 
 
 
